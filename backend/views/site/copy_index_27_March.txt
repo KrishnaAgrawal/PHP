@@ -1,0 +1,258 @@
+
+<?php
+
+use yii\data\ArrayDataProvider;
+use yii\helpers\Html;
+use yii\widgets\ActiveForm;
+use kartik\grid\GridView;
+
+//$this->registerCssFile(Yii::$app->params['ASSETS_PATH'] . 'css/bootstrap-4.css');
+//$this->registerCssFile(Yii::$app->params['ASSETS_PATH'] . 'css/report.css');
+$this->registerCssFile(Yii::$app->request->baseurl . '/css/boostrap-4.css');
+$this->registerCssFile(Yii::$app->request->baseurl . '/css/report.css');
+
+$sheet = null;
+$tableShow = null;
+$action = null;
+$arrParams = Yii::$app->request->queryParams;
+if (!empty($arrParams['sheet'])) {
+    $sheet = $arrParams['sheet'];
+}
+if (!empty($arrParams['tableShow'])) {
+    $tableShow = $arrParams['sheet'];
+}
+if (!empty($arrParams['action'])) {
+    $tableShow = $arrParams['action'];
+}
+?>
+
+<!--<div class="card pr-0 pl-0">-->
+<div class="content">
+    <div class="row">
+        <!-- Left Section -->
+        <div class="col-md-3 m-0 p-0 left-block">
+            <div class="card p-4 left-section">
+                <?php
+                $form = ActiveForm::begin(['action' => 'http://localhost/fingertips/backend/web/index.php?r=site%2Fcompare-tables', 'method' => 'get']);
+//                echo Html::buttonInput("+");
+                ?>
+                <div class="col-md-12 m-0 p-0 pl-2 pr-2 right-block">
+                    <div class="card p-2 right-section">
+                        <label> Select Sheet</label>
+                    </div>
+                    <div class="card p-2 right-section">
+                        <?php
+                        echo Html::dropDownList("sheet", $sheet, $arrSheetTitles, ['class' => 'form-control', 'prompt' => 'Select-Sheet']) . "<br />";
+                        ?>
+                    </div>
+                </div>
+                <br />
+                <div class="col-md-12 m-0 p-0 pl-2 pr-2 right-block">
+                    <div class="card p-2 right-section">
+                        <label> Select To Show Tables</label>
+                    </div>
+                    <div class="card p-2 right-section">
+                        <?php
+                        echo Html::dropDownList("tables", $strTableToShow, $arrTableToShow, ['class' => 'form-control', 'prompt' => 'Select-Choice']) . "<br />";
+                        ?>
+                    </div>
+                </div>
+                    <div class="card p-2 right-section">
+                        <?php
+                        echo Html::submitButton('Submit');
+                        ?>
+                    </div>
+                <?php
+                $form = ActiveForm::end();
+                ?>
+            </div>
+        </div>
+        <div class=" col-sm-9">
+            <div class="card-header">
+                <span style="font-size: 1.2em; font-weight: bold;">Tables Summary</span>:<br /><br />
+                <span>Total Tables: <?= $arrCount["totalCount"] ?></span><br />
+                <span>Total Tables (Sheet): <?= $arrCount["totalSheetCount"] ?></span><br />
+                <span>Total Tables (Database): <?= $arrCount["totalDbCount"] ?></span><br />
+                <!--<span>Total number of Tables which are common: <?php // $arrCount["totalSheetCount"]   ?></span><br />-->
+            </div>
+
+
+
+            <div class="card-block">
+
+                <?php
+                if (!empty($tables)) {
+
+//$dropdown_field = "dropdown";
+//                $form = ActiveForm::begin(['action' => 'http://localhost/fingertips/backend/web/index.php?r=site%2Fcompare-tables','method' => 'get']);
+                    echo backend\models\GridEasy::widget(['arrGrid' => [
+                            'dataProvider' => $dataProvider,
+                            'filterModel' => 'false',
+                            'toolbar' => [
+//        ['content' => 
+//            Html::button('<i class="glyphicon glyphicon-plus"></i>', ['type' => 'button', 'title' => Yii::t('kvgrid', 'Add Book'), 'class' => 'btn btn-success', 'onclick' => 'alert("This will launch the book creation form.\n\nDisabled for this demo!");']) . ' '.
+//            Html::a('<i class="glyphicon glyphicon-repeat"></i>', ['grid-demo'], ['data-pjax' => 0, 'class' => 'btn btn-default', 'title' => Yii::t('kvgrid', 'Reset Grid')])
+//        ],
+                                '{export}',
+                                '{toggleData}',
+                            ],
+//                'rowOptions' => function ($model) {
+//                if ($model['Sheet_Table'] == $model['Db_Table']) {
+//                    return ['class' => 'bg-success'];
+//                }
+//                if ($model['Sheet_Table'] != $model['Db_Table']) {
+//                    return ['class' => 'bg-danger'];
+//                }
+//            },
+                            'columns' => [
+                                [
+                                    'attribute' => 'Table',
+                                    'header' => 'Table',
+                                    'filter' => Html::input('text', 'tableName', $strTableSearched),
+//                            'filterPosition' => GridView::FILTER_POS_FOOTER,
+//                            function () {
+//                                return Html::buttonInput($label);
+//                            }
+//                            'layout'=>"{sorter}\n{pager}\n{summary}\n{items}",
+//                            ['class' => 'yii\grid\SerialColumn'],
+//                            ['class' => 'yii\grid\ActionColumn'],
+                                ],
+                                [
+                                    'attribute' => 'Sheet_Table',
+                                    'header' => 'Sheet',
+//                            'filter' => Html::input('text','sheetTableName'),
+                                    'value' => function($model) {
+                                        if ($model['Sheet_Table'] == '1') {
+                                            return 'Yes';
+                                        } else {
+                                            return 'No';
+                                        }
+                                    },
+                                ],
+                                [
+                                    'attribute' => 'Db_Table',
+                                    'header' => 'Database',
+//                            'filter' => Html::input('text','dbTableName'),
+                                    'value' => function($model) {
+                                        if ($model['Db_Table'] == '1') {
+                                            return 'Yes';
+                                        } else {
+                                            return 'No';
+                                        }
+                                    },
+                                ],
+                                [
+                                    'attribute' => '',
+                                    'header' => 'Action',
+                                    'format' => 'raw',
+//                            'filter' => Html::submitButton('Submit'),
+                                    'content' => function ($data) use($action, $arrAction) {
+                                        return Html::dropDownList("Action", $action, $arrAction, ['class' => 'form-control', 'prompt' => 'Choose-Action']);
+                                    }
+                                ],
+                            ],
+                    ]]);
+//                    echo Html::submitButton('Submit');
+//                    $form = ActiveForm::end();
+                } else {
+
+
+                    $provider = new ArrayDataProvider([
+                        'allModels' => $arrRes,
+                        'pagination' => false,
+                    ]);
+                    echo GridView::widget([
+                        'dataProvider' => $provider,
+                        'columns' => [
+                            [
+                                'attribute' => '',
+                                'header' => 'Table',
+                                'value' => $field_tbl,
+                            ],
+                            [
+                                'attribute' => '',
+                                'header' => 'Column Name',
+                                'value' => $field_tbl_column,
+                            ],
+//        'sheetField',
+//        'dbField',
+                            [
+                                'attribute' => '',
+                                'header' => 'Column Found',
+//                'filter' => Html::drop
+                                'value' => function ($data) {
+                                    if (!empty($data['sheetField']) && !empty($data['dbField'])) {
+                                        if ($data['sheetField'] == $data['dbField']) {
+                                            return 'Yes';
+                                        }
+                                    }
+                                    return 'Column Mismatch';
+                                },
+                            ],
+//        'sheettypesize',
+//        'dbtypesize',
+                            [
+                                'attribute' => '',
+                                'header' => 'Type Size',
+                                'value' => function ($data) {
+                                    if (!empty($data['sheettypesize']) && !empty($data['dbtypesize'])) {
+                                        if ($data['sheettypesize'] == $data['dbtypesize']) {
+                                            return 'Yes';
+                                        }
+                                    }
+                                    return 'Type/Size Mismatch';
+                                },
+                            ],
+//        'sheetNull',
+//        'dbNull',
+                            [
+                                'attribute' => '',
+                                'header' => 'Null',
+                                'value' => function ($data) {
+                                    if (!empty($data['sheetNull']) && !empty($data['dbNull'])) {
+                                        if ($data['sheetNull'] == $data['dbNull']) {
+                                            return 'Yes';
+                                        }
+                                    }
+                                    return 'Null Mismatch';
+                                },
+                            ],
+//        'SheetPrimary',
+//        'DbPrimary',
+                            [
+                                'attribute' => '',
+                                'header' => 'Primary Key',
+                                'value' => function ($data) {
+                                    if (!empty($data['SheetPrimary']) && !empty($data['DbPrimary'])) {
+                                        if ($data['SheetPrimary'] == $data['DbPrimary']) {
+                                            return 'Yes';
+                                        }
+                                        return 'Primary Mismatch';
+                                    }
+                                },
+                            ],
+//        'SheetForeign',
+//        'DbForeign'
+                            [
+                                'attribute' => '',
+                                'header' => 'Foreign Key',
+                                'value' => function ($data) {
+                                    if (!empty($data['SheetForeign']) && !empty($data['DbForeign'])) {
+                                        if ($data['SheetForeign'] == $data['DbForeign']) {
+                                            return 'Yes';
+                                        }
+                                        return 'Foreign Mismatch';
+                                    }
+                                },
+                            ],
+                        ]
+                    ]);
+                }
+                ?>
+<!--            <script>
+                alert(document.getElegetElementByName('tableName').value);
+            </script>-->
+            </div>
+        </div>
+    </div>
+</div>
