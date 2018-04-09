@@ -173,7 +173,7 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
 //                            print_r($totalDbCountPerTable);
 //                            exit;
                             
-                            $str .= '<span data-trigger="hover"'
+                            $str .= '<span class="tableText" data-trigger="hover"'
                                     . ' data-html="true" data-container="body" data-toggle="popover" data-placement="right"'
                                     . ' data-content="Sheet column Count: ' . $totalSheetCountPerTable[$data[$field_tbl]] . ',<br />'
                                     . 'Database column Count: ' . $totalDbCountPerTable[$data[$field_tbl]] . '" '
@@ -362,6 +362,9 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
         background-color: #c1c1c1;
     }
     .label-danger,.label-success{
+        cursor: pointer;
+    }
+    .tableText{
         cursor: pointer;
     }
 

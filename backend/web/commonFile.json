@@ -1,7 +1,8 @@
 {
     "saarthi1_retail_user": {
         "columns": {
-            "tbl_account_group#txt_name": "remove_from_both"
+            "tbl_account_group#txt_name": "remove_from_both",
+            "tbl_account_group#int_account_group_id": "modify_in_sheet"
         },
         "dbinfo": {
             "dbType": "sqlite",
