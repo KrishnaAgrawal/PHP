@@ -49,7 +49,7 @@ $this->title = 'Database/Sheet Comparison (Table Wise)';
                     $arrGridView = [
                         'dataProvider' => $dataProvider,
                         'filterModel' => 'false',
-                        'emptyText' => 'Please choose Comparison Type.',
+                        'emptyText' => 'Please Select Sheet Type.',
                         'toolbar' => [
                             '{export}',
                             '{toggleData}',
@@ -176,7 +176,7 @@ $this->title = 'Database/Sheet Comparison (Table Wise)';
                     <div class="pull-left">
                         
                         <?php 
-                        $filters = (!empty($arrpreferenceOption[$preferenceOption])?'<div class="chip p-2 text-bold">'. implode(",", array_values($sheet)).'</div>':'');
+                        $filters = (!empty($arrpreferenceOption[$preferenceOption])? implode(", &nbsp;", array_values($sheet)):'');
                         
                         $arrGridView['panelBeforeTemplate'] = '<div class="pull-left">'.$filters.'</div>';?>
                         

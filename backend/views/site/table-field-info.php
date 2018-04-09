@@ -33,9 +33,6 @@ $totalDbCountPerTable = 0;
 if (!empty($arrCount["totalDbCountPerTable"])) {
     $totalDbCountPerTable = $arrCount["totalDbCountPerTable"];
 }
-if(empty($preferenceOption)){
-    $preferenceOption = "sheet_to_db";
-}
 $this->title = 'Database/Sheet Comparison (Column Wise)';
 ?>
 
@@ -45,16 +42,14 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
             <h4 class="page-title">                
                 <?= $this->title; ?>
                 <!--Summary of tables-->
-                <div class="pull-right " style="font-size:14px;">
-                    <?php /* <span class="text-info">Matching: <kbd><?= $arrCount["totalMatchCount"]; ?>/<?= $arrCount["totalCount"] ?></kbd></span> |
-                      <span class="text-info">Non Matching: <kbd><?= $arrCount["totalNonMatchCount"]; ?>/<?= $arrCount["totalCount"] ?></kbd></span> |
-                      <span class="text-info">Tables (Sheet): <kbd><?= $arrCount["totalSheetCount"] ?>/<?= $arrCount["totalCount"] ?></kbd></span> |
-                      <span class="text-info">Tables (Database): <kbd><?= $arrCount["totalDbCount"] ?>/<?= $arrCount["totalCount"] ?></kbd></span> */ ?>
-                    <span class="text-info">Matching: <kbd><?= $arrCount["totalColumnMatchCount"]; ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span> |
-                    <span class="text-info">Non Matching: <kbd><?= $arrCount["totalColumnNonMatchCount"]; ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span> |
-                    <span class="text-info">Tables (Sheet): <kbd><?= $arrCount["totalColumnSheetCount"] ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span> |
-                    <span class="text-info">Tables (Database): <kbd><?= $arrCount["totalColumnDbCount"] ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span>
-                </div>
+                <?php  if(!empty($preferenceOption)) {?>
+                    <div class="pull-right " style="font-size:14px;">
+                        <span class="text-info">Matching: <kbd><?= $arrCount["totalColumnMatchCount"]; ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span> |
+                        <span class="text-info">Non Matching: <kbd><?= $arrCount["totalColumnNonMatchCount"]; ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span> |
+                        <span class="text-info">Columns (Sheet): <kbd><?= $arrCount["totalColumnSheetCount"] ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span> |
+                        <span class="text-info">Columns (Database): <kbd><?= $arrCount["totalColumnDbCount"] ?>/<?= $arrCount["totalColumnCount"] ?></kbd></span>
+                    </div>
+                <?php } ?>
             </h4> 
         </div>
     </div>
@@ -74,6 +69,9 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
                         <h4> Comparison Type: </h4>
                         <div>
                             <?php
+                            if(empty($preferenceOption)){
+                                $preferenceOption = "sheet_to_db";
+                            }
                             echo \yii\bootstrap\Html::radioList("preferenceOption", $preferenceOption, $arrpreferenceOption, ['class' => 'h-25', 'prompt' => 'Select-Sheet']) . "";
                             ?>
                         </div>
@@ -152,7 +150,7 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
             $arrGridView = [
                 'dataProvider' => $dataProvider,
                 'filterModel' => 'false',
-                'emptyText' => 'Please choose Comparison Type.',
+                'emptyText' => 'Please Select Sheet.',
                 'toolbar' => [
                     '{export}',
                     '{toggleData}',
@@ -167,7 +165,19 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
                         'vAlign' => 'middle',
                         'content' => function($data, $totalSheetCountPerTable, $totalDbCountPerTable, $field_tbl) use($field_tbl, $totalSheetCountPerTable, $totalDbCountPerTable) {
                             $str = '';
-                            $str .= '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="Sheet column Count: ' . $totalSheetCountPerTable[$data[$field_tbl]] . ',<br />Database column Count: ' . $totalDbCountPerTable[$data[$field_tbl]] . '" data-original-title="" title="">' . $data[$field_tbl] . '</span>';
+//                            echo "<pre>";
+//                            print_r($totalSheetCountPerTable);
+//                            print_r($data[$field_tbl]);
+//                            print_r($field_tbl);
+//                            print_r($data);
+//                            print_r($totalDbCountPerTable);
+//                            exit;
+                            
+                            $str .= '<span data-trigger="hover"'
+                                    . ' data-html="true" data-container="body" data-toggle="popover" data-placement="right"'
+                                    . ' data-content="Sheet column Count: ' . $totalSheetCountPerTable[$data[$field_tbl]] . ',<br />'
+                                    . 'Database column Count: ' . $totalDbCountPerTable[$data[$field_tbl]] . '" '
+                                    . 'data-original-title="" title="">' . $data[$field_tbl] . '</span>';
                             return $str;
                         },
                     ],
@@ -231,12 +241,15 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
                         'contentOptions' => ['class' => 'text-center'],
                         'content' => function ($data) {
                             $str = '';
-                            if (!empty($data['sheetNull']) && !empty($data['dbNull'])) {
-                                if ($data['sheetNull'] == $data['dbNull']) {
-                                    return '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="Sheet: ' . $data["sheetNull"] . ',<br />Database: ' . $data["dbNull"] . '" data-original-title="" title="">' . \backend\models\DbCompare::LABEL_YES . '</span>';
-                                }
-                                return '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="Sheet: ' . $data["sheetNull"] . ',<br />Database: ' . $data["dbNull"] . '" data-original-title="" title="">' . \backend\models\DbCompare::LABEL_NO . '</span>';
-                            }
+                            $keySheet = 'sheetNull';
+                            $keyDb = 'dbNull';
+//                            $str = '<span class="text-success">'.$data['sheettypesize'].'</span> <br>'.'<span class="text-danger">'. $data['dbtypesize'].'</span>';
+                            $label =  \backend\models\DbCompare::LABEL_NO ;
+                            if ((!empty($data[$keySheet]) && !empty($data[$keyDb])) && (strtolower($data[$keySheet]) == strtolower($data[$keyDb]))  ) {
+                                $label =  \backend\models\DbCompare::LABEL_YES ;
+                            } 
+                            $str .= '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="Sheet: ' . (!empty($data[$keySheet])?$data[$keySheet]:'--') . ',<br />Database: ' . (!empty($data[$keyDb])?$data[$keyDb]:'--') . '" data-original-title="" title="">' . $label . '</span>';
+                            return $str;
                         },
                     ],
 //        'SheetPrimary',

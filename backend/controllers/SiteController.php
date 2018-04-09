@@ -61,16 +61,13 @@ class SiteController extends Controller {
      * @return string
      */
     public function actionIndex() {
-//        Yii::$app->db->driverName
-        echo "<pre>";print_r(Yii::$app->db->dsn);exit;
-    // mysql/sqlite
-        $db_type = Yii::$app->db->driverName;
+
         $arrCommonResponseColumnName = [];
         $strTableToShow = '';
         $sheet_db = 0;
         $preferenceOption = '';
         $common_field = '';
-        $filename = "tableColumnData.json";
+        $filename = "commonFile.json";
         // making object of dbCompare Class
         $objDbCompare = new DbCompare();
 
@@ -89,8 +86,12 @@ class SiteController extends Controller {
         if (file_exists($filename)) {
             $strJson = file_get_contents($filename);
             $arrTableAction = Json::decode($strJson, true);
+            $arrDatabaseDetail = $objDbCompare->getDatabaseName();
+            $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['columns'];
         }
-
+        else{
+            $handle = fopen($filename, "w"); 
+        }
         // getting value by name for matching type
         if (!empty($arrParams["tables"])) {
             $strTableToShow = $arrParams["tables"];
@@ -199,21 +200,20 @@ class SiteController extends Controller {
         $totalColumnCountPerTable = ArrayHelper::getColumn($arrAll, 'str_table');
         // total sheet column count
         $totalSheetCountPerTable = ArrayHelper::getColumn($arrAll, function($data) {
-                    if (!empty($data['sheetField'])) {
+                    if (!empty($data['sheetField']) && !empty($data['str_table']) ) {
                         return $data['str_table'];
                     }
                 });
         // total db column count
         $totalDbCountPerTable = ArrayHelper::getColumn($arrAll, function($data) {
-                    if (!empty($data['dbField'])) {
+                    if (!empty($data['dbField']) && !empty($data['str_table']) ) {
                         return $data['str_table'];
                     }
                 });
-
-//        echo '<pre>';print_r($count);
         $totalColumnCountPerTable = (array_count_values(array_filter($totalColumnCountPerTable)));
         $totalSheetCountPerTable = (array_count_values(array_filter($totalSheetCountPerTable)));
         $totalDbCountPerTable = (array_count_values(array_filter($totalDbCountPerTable)));
+        
 
         $dataProvider = new ArrayDataProvider([
             'allModels' => $arrAll,
@@ -265,7 +265,7 @@ class SiteController extends Controller {
 
         $strTableSearched = NULL;
         $arrParams = Yii::$app->request->queryParams;
-        $filename = "tableData.json";
+        $filename = "commonFile.json";
         $arrTableAction = [];
         $sheet_db = 0;
         $strTableToShow = '';
@@ -283,6 +283,9 @@ class SiteController extends Controller {
         if (!empty($arrParams["sheet_db"])) {
             $sheet_db = $arrParams["sheet_db"];
         }
+        if (!empty($arrParams["sheet"])) {
+            $sheet = $arrParams["sheet"];
+        }
         if (!empty($arrParams['tables'])) {
             $strTableToShow = $arrParams['tables'];
         }
@@ -293,7 +296,10 @@ class SiteController extends Controller {
         if (file_exists($filename)) {
             $strJson = file_get_contents($filename);
             $arrTableAction = Json::decode($strJson, true);
+            $arrDatabaseDetail = $objDbCompare->getDatabaseName();
+            $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['tables'];
         }
+        
         if (!empty($arrResult['arrTables'])) {
             $arrAll = $arrResult['arrTables'];
             $arrSheetsTbl = ArrayHelper::getColumn($arrAll, 'Sheet_Table');
@@ -346,7 +352,7 @@ class SiteController extends Controller {
             $arrDbTbl = [];
             $arrSheetsTbl = [];
         }
-        //  checking for common and not common tables from database and sheet and filling in $arrCommonOrNot
+    //  checking for common and not common tables from database and sheet and filling in $arrCommonOrNot
         $arrCommonOrNot = array_map(function($value) {
             if (!empty($value["Db_Table"]) && !empty($value["Sheet_Table"])) {
                 return 1;
@@ -395,6 +401,7 @@ class SiteController extends Controller {
                     'strTableToShow' => $strTableToShow,
                     'strTableSearched' => $strTableSearched,
                     'sheet_db' => $sheet_db,
+                    'sheet' => $sheet,
         ]);
     }
 
@@ -453,6 +460,7 @@ class SiteController extends Controller {
 
                     //  filling data into variable by list
                     list($strTableName, $strFieldName, $strFieldType, $strFieldSize, $flagAllowedNull, $strKeyType, $strRemarks) = $recData;
+                    $strTableName = trim($strTableName);
                     if (!empty($strTableName)) {
                         $strTempTableName = $strTableName;
                     } else {
@@ -528,9 +536,9 @@ class SiteController extends Controller {
 
                 //  filling data into variable by list
                 list($strTableName, $strFieldName, $strFieldType, $strFieldSize, $flagAllowedNull, $strKeyType, $strRemarks) = $recData;
-
+                $strTableName = trim($strTableName);
                 //  Fetching those table which are common in sheet
-                if (!empty($strTableName)) {
+                if (!empty($strTableName) && strpos($strTableName, "tbl_") !== FALSE) {
                     $arrTable = Yii::$app->db->getTableSchema($strTableName);
                 }
                 // Check Table Exists or Not
@@ -663,7 +671,7 @@ class SiteController extends Controller {
 //  Iterating only those column which are in database
         if (!empty($arrColumnNotInSheet)) {
             $arrCommonCols = ArrayHelper::getColumn($arrCommonResponse, 'str_table_column', true);
-            
+
 
             foreach ($arrColumnNotInSheet as $key => $value) {
                 $arrTable = Yii::$app->db->getTableSchema($key);
@@ -681,19 +689,18 @@ class SiteController extends Controller {
                         $strFieldName = $subValue;
 //                        echo $subValue."<br />";
 //                        $strFieldType = $arrCommonCols[key($subValue)]['sheettypesize'];
-                        
-                    // Check for  Field Type
+                        // Check for  Field Type
                         if (!empty($strFieldType)) {
                             $strFieldType = $objDbCompare->getFieldType($strFieldType, $strFieldSize);
                         }
 
-                    // Check for db Type
+                        // Check for db Type
                         if (!empty($arrTable->columns[$strFieldName]->dbType)) {
                             $strDbType = $arrTable->columns[$strFieldName]->dbType;
                         }
 
-                        
-                        
+
+
                         if (!empty($arrTable->columns[$subValue])) {
                             $dbNull = $arrTable->columns[$subValue]->allowNull;
                             if (empty($dbNull)) {
@@ -731,23 +738,23 @@ class SiteController extends Controller {
                         // 
                         // Check in Database $strFieldType and $strFieldSize exits or not
                         $strFieldName = $subValue;
-                       
+
                         $strFieldType = $arrCommonResponse[array_search($strFieldName, $arrCommonCols)]['type'];
                         $strFieldSize = $arrCommonResponse[array_search($strFieldName, $arrCommonCols)]['size'];
                         $flagAllowedNull = $arrCommonResponse[array_search($strFieldName, $arrCommonCols)]['null'];
-                    // Check for  Field Type
+                        // Check for  Field Type
                         if (!empty($strFieldType)) {
 //                            echo "<pre>";            print_r(strtolower($strFieldType) == "smallint");exit;
                             $strFieldType = $objDbCompare->getFieldType($strFieldType, $strFieldSize);
 //                             echo "<pre>";            print_r($strFieldType.$strFieldSize);exit;
                         }
 //                        echo $strFieldType;exit;
-                    // Check for db Type
+                        // Check for db Type
                         if (!empty($arrTable->columns[$strFieldName]->dbType)) {
                             $strDbType = $arrTable->columns[$strFieldName]->dbType;
                         }
 
-                    // Checking Db Not Null
+                        // Checking Db Not Null
                         if (!empty($arrTable->columns[$strFieldName])) {
                             $dbNull = $arrTable->columns[$strFieldName]->allowNull;
                             if (empty($dbNull)) {
@@ -756,8 +763,8 @@ class SiteController extends Controller {
                                 $dbNull = 'Yes';
                             }
                         }
-                        
-                    // Checking Sheet Not Null
+
+                        // Checking Sheet Not Null
                         if (!empty($flagAllowedNull)) {
                             if (strtolower($flagAllowedNull) == "yes") {
                                 $sheetNull = 'Yes';
@@ -766,7 +773,7 @@ class SiteController extends Controller {
                             }
                         }
 
-                    // Case 1: Sheet-> P, Db-> NP
+                        // Case 1: Sheet-> P, Db-> NP
                         if (!empty($arrTable->columns[$strFieldName])) {
                             // Case : Primary
                             if ($arrTable->columns[$strFieldName]->isPrimaryKey) {
@@ -781,7 +788,7 @@ class SiteController extends Controller {
                         }
 
 
-                    // Check for foreign keys
+                        // Check for foreign keys
                         $arrForeignKey = $arrTable->foreignKeys;
                         if (!empty($arrForeignKey) && strtolower($strKeyType) == "foreign") {
                             foreach ($arrForeignKey as $key => $value) {
@@ -799,7 +806,7 @@ class SiteController extends Controller {
                             }
                         }
                     }
-                    
+
 
                     $strResponse[$key][$subValue . "#Field"] = 'No/Not Exists in Sheet';
                     $strResponse[$key][$subValue . "#sheetField"] = $strFieldName;              #
@@ -839,7 +846,7 @@ class SiteController extends Controller {
 //        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
 //            return $this->render('index', ['model' => $model]);
 //        } 
-//        else {
+    //        else {
 //            return $this->render('entry', ['model' => $model]);
 //        }
 //    }
@@ -869,15 +876,44 @@ class SiteController extends Controller {
      */
 
     public function actionSaveResponse() {
-
-        $arrPost = \Yii::$app->request->post();
-
+        if(!Yii::$app->request->isAjax){
+            return 'Fail';
+        }
+        $tableName = '';
+        $tableAction = '';
+        $strJson = '';
+        $arrJson = [];
+        $filename = "commonFile.json";
+        $objDbCompare = new DbCompare();
+        $arrPost = Yii::$app->request->post();
+//        echo "<pre>";print_r($arrPost);exit; 
+        
+        $dbDetails = $objDbCompare->getDatabaseName();
+        $db_type = $dbDetails["db_type"];
+        $dsn = $dbDetails["dsn"];
+        $dbName = $dbDetails["dbName"];
+        
+        $arrDbJson["dbType"] = $db_type;
+        $arrDbJson["dsn"] = $dsn;
+        $arrDbJson["name"] = $dbName;
+        
+        if (empty(filesize($filename))) {
+            $arrDbinfo = $arrDbJson;
+            $arrTblinfo = [];
+            $arrColinfo = [];
+        } else {
+            $arrDbinfo = $arrDbJson;
+            $arrTblinfo = [];
+            $arrColinfo = [];
+        }
+        
         if (!empty($arrPost['tableName'])) {
 
-            $filename = "tableData.json";
+//        echo $arrPost['tableName'];exit;    
             if (file_exists($filename)) {
                 $strJson = file_get_contents($filename);
                 $arrJson = Json::decode($strJson, true);
+//    ECHO $strJson;exit;
                 if (!empty($arrPost['tableName'])) {
                     $tableName = $arrPost['tableName'];
                 }
@@ -887,20 +923,19 @@ class SiteController extends Controller {
                 }
 
                 if (!empty($tableName) && !empty($tableAction)) {
-                    $arrJson[$tableName] = $tableAction;
+                    $arrJson[$dbName]["tables"][$tableName] = $tableAction;
                 }
 
                 if (!empty($tableName) && empty($tableAction)) {
-                    unset($arrJson[$tableName]);
+                    unset($arrJson[$dbName]["tables"][$tableName]);
                 }
 
                 if (!empty($arrPost['txtAction']) && $arrPost['txtAction'] == "done") {
-                    unset($arrJson[$tableName]);
+                    unset($arrJson[$dbName]["tables"][$tableName]);
                 }
             }
         } else {
-
-            $filename = "tableColumnData.json";
+               
             if (file_exists($filename)) {
                 $strJson = file_get_contents($filename);
                 $arrJson = Json::decode($strJson, true);
@@ -913,20 +948,23 @@ class SiteController extends Controller {
                 }
 
                 if (!empty($tableName) && !empty($tableAction)) {
-                    $arrJson[$tableName] = $tableAction;
+                    $arrJson[$dbName]["columns"][$tableName] = $tableAction;
                 }
 
                 if (!empty($tableName) && empty($tableAction)) {
-                    unset($arrJson[$tableName]);
+                    unset($arrJson[$dbName]["columns"][$tableName]);
                 }
 
                 if (!empty($arrPost['txtAction']) && $arrPost['txtAction'] == "done") {
-                    unset($arrJson[$tableName]);
+                    unset($arrJson[$dbName]["columns"][$tableName]);
                 }
             }
         }
+        
+        $arrJson[$dbName]["dbinfo"] = $arrDbinfo;
+        $strJson = json_encode($arrJson,JSON_PRETTY_PRINT);
+        file_put_contents($filename, $strJson);
 
-        file_put_contents($filename, Json::encode($arrJson));
         return 'Successfully saved';
     }
 
@@ -935,22 +973,74 @@ class SiteController extends Controller {
      */
 
     public function actionTableReport() {
-
-        $fileName = "tableData.json";
-        $arrReport = [];
-        $counter = 0;
         // Getting request
         $arrParams = Yii::$app->request->queryParams;
-        // reading data from json file
+        $arrDatabase = [];
+        $arrAllDatabaseName = [];
+        $fileName = "commonFile.json";
+        $arrReport = [];
+        $counter = 0;
+        //  Calculating counts
+        $count_add_to_database = 0;
+        $count_modify_in_both = 0;
+        $count_add_to_sheet = 0;
+        $count_modify_in_database = 0;
+        $count_modify_in_sheet = 0;
+        $count_remove_from_both = 0;
+        $count_remove_from_database = 0;
+        $count_remove_from_sheet = 0;
+        
+    // reading data from json file
         $arrJson = file_get_contents($fileName);
         $arrTableReport = Json::decode($arrJson);
+        
+    // making all databases array
+        $objDbCompare = new DbCompare();
+        $arrAllDatabaseName = $objDbCompare->getAllDatabaseNameFromJson($arrTableReport);
+        
+        if(!empty($arrParams['database'])){
+            $arrDatabase = $arrParams['database'];
+        }else{
+            $arrDatabase = $arrAllDatabaseName;
+        }
+        
+        foreach ($arrDatabase as $key => $value){
+            $dbName = $value;
+            if (!empty($arrTableReport[$dbName]["tables"])) {
+                // making array of json having index (key) table and action array
+                foreach ($arrTableReport[$dbName]["tables"] as $key => $value) {
+                    $arrReport[$counter]["db"] = $dbName;
+                    $arrReport[$counter]["table"] = $key;
+                    $arrReport[$counter]["action"] = $value;
+                    $counter++;
+                }
 
-        if (!empty($arrTableReport)) {
-            // making array of json having index (key) table and action array
-            foreach ($arrTableReport as $key => $value) {
-                $arrReport[$counter]["table"] = $key;
-                $arrReport[$counter]["action"] = $value;
-                $counter++;
+                foreach ($arrTableReport[$dbName]["tables"] as $tableName => $action) {
+                    if ($action == "add_to_database") {
+                        $count_add_to_database++;
+                    }
+                    if ($action == "add_to_sheet") {
+                        $count_add_to_sheet++;
+                    }
+                    if ($action == "modify_in_both") {
+                        $count_modify_in_both++;
+                    }
+                    if ($action == "modify_in_database") {
+                        $count_modify_in_database++;
+                    }
+                    if ($action == "modify_in_sheet") {
+                        $count_modify_in_sheet++;
+                    }
+                    if ($action == "remove_from_both") {
+                        $count_remove_from_both++;
+                    }
+                    if ($action == "remove_from_database") {
+                        $count_remove_from_database++;
+                    }
+                    if ($action == "remove_from_sheet") {
+                        $count_remove_from_sheet++;
+                    }
+                }
             }
         }
         foreach ($arrReport as $key => $value) {
@@ -968,43 +1058,7 @@ class SiteController extends Controller {
                 }
             }
         }
-
-        //  Calculating counts
-        $count_add_to_database = 0;
-        $count_modify_in_both = 0;
-        $count_add_to_sheet = 0;
-        $count_modify_in_database = 0;
-        $count_modify_in_sheet = 0;
-        $count_remove_from_both = 0;
-        $count_remove_from_database = 0;
-        $count_remove_from_sheet = 0;
-        foreach ($arrTableReport as $tableName => $action) {
-            if ($action == "add_to_database") {
-                $count_add_to_database++;
-            }
-            if ($action == "add_to_sheet") {
-                $count_add_to_sheet++;
-            }
-            if ($action == "modify_in_both") {
-                $count_modify_in_both++;
-            }
-            if ($action == "modify_in_database") {
-                $count_modify_in_database++;
-            }
-            if ($action == "modify_in_sheet") {
-                $count_modify_in_sheet++;
-            }
-            if ($action == "remove_from_both") {
-                $count_remove_from_both++;
-            }
-            if ($action == "remove_from_database") {
-                $count_remove_from_database++;
-            }
-            if ($action == "remove_from_sheet") {
-                $count_remove_from_sheet++;
-            }
-        }
-
+        
         $count_total_action_report = $count_add_to_database + $count_modify_in_both + $count_add_to_sheet + $count_modify_in_database + $count_modify_in_sheet + $count_remove_from_both + $count_remove_from_database + $count_remove_from_sheet;
 
         $arrCount = [
@@ -1018,7 +1072,7 @@ class SiteController extends Controller {
             'count_remove_from_sheet' => $count_remove_from_sheet,
             'count_total_action_report' => $count_total_action_report,
         ];
-
+//echo "<pre>";print_r($arrReport);exit;
         $dataProvider = new ArrayDataProvider([
             'allModels' => $arrReport,
             'pagination' => false,
@@ -1027,6 +1081,8 @@ class SiteController extends Controller {
         return $this->render('table-report', [
                     'dataProvider' => $dataProvider,
                     'arrCount' => $arrCount,
+                    'arrAllDatabaseName' => $arrAllDatabaseName,
+                    'database' => $arrDatabase,
         ]);
     }
 
@@ -1035,25 +1091,75 @@ class SiteController extends Controller {
      */
 
     public function actionTableColumnReport() {
-
-        $fileName = "tableColumnData.json";
+ // Getting request
+        $arrParams = Yii::$app->request->queryParams;
+        $arrDatabase = [];
+        $arrAllDatabaseName = [];
+        $fileName = "commonFile.json";
         $arrReport = [];
         $counter = 0;
-        // Getting request
-        $arrParams = Yii::$app->request->queryParams;
-
-        // reading data from json file
+        //  Calculating counts
+        $count_add_to_database = 0;
+        $count_modify_in_both = 0;
+        $count_add_to_sheet = 0;
+        $count_modify_in_database = 0;
+        $count_modify_in_sheet = 0;
+        $count_remove_from_both = 0;
+        $count_remove_from_database = 0;
+        $count_remove_from_sheet = 0;
+        
+    // reading data from json file
         $arrJson = file_get_contents($fileName);
         $arrTableReport = Json::decode($arrJson);
-
-        if (!empty($arrTableReport)) {
-            // making array of json having index (key) table and action array
-            foreach ($arrTableReport as $key => $value) {
-                $arrTableAndColumn = explode("#", $key);
-                $arrReport[$counter]["table"] = $arrTableAndColumn[0];
-                $arrReport[$counter]["column"] = $arrTableAndColumn[1];
-                $arrReport[$counter]["action"] = $value;
-                $counter++;
+        
+    // making all databases array
+        $objDbCompare = new DbCompare();
+        $arrAllDatabaseName = $objDbCompare->getAllDatabaseNameFromJson($arrTableReport);
+        
+        if(!empty($arrParams['database'])){
+            $arrDatabase = $arrParams['database'];
+        }else{
+            $arrDatabase = $arrAllDatabaseName;
+        }
+        
+        foreach ($arrDatabase as $key => $value){
+            $dbName = $value;
+            if (!empty($arrTableReport[$dbName]['columns'])) {
+                // making array of json having index (key) table and action array
+                foreach ($arrTableReport[$dbName]['columns'] as $key => $value) {
+                    $arrTableAndColumn = explode("#", $key);
+                    $arrReport[$counter]["db"] = $dbName;
+                    $arrReport[$counter]["table"] = $arrTableAndColumn[0];
+                    $arrReport[$counter]["column"] = $arrTableAndColumn[1];
+                    $arrReport[$counter]["action"] = $value;
+                    $counter++;
+                }
+                foreach ($arrTableReport[$dbName]['columns'] as $tableName => $action) {
+                    if ($action == "add_to_database") {
+                        $count_add_to_database++;
+                    }
+                    if ($action == "add_to_sheet") {
+                        $count_add_to_sheet++;
+                    }
+                    if ($action == "modify_in_both") {
+                        $count_modify_in_both++;
+                    }
+                    if ($action == "modify_in_database") {
+                        $count_modify_in_database++;
+                    }
+                    if ($action == "modify_in_sheet") {
+                        $count_modify_in_sheet++;
+                    }
+                    if ($action == "remove_from_both") {
+                        $count_remove_from_both++;
+                    }
+                    if ($action == "remove_from_database") {
+                        $count_remove_from_database++;
+                    }
+                    if ($action == "remove_from_sheet") {
+                        $count_remove_from_sheet++;
+                    }
+                }
             }
         }
         foreach ($arrReport as $key => $value) {
@@ -1077,42 +1183,6 @@ class SiteController extends Controller {
                 }
             }
         }
-        //  Calculating counts
-        $count_add_to_database = 0;
-        $count_modify_in_both = 0;
-        $count_add_to_sheet = 0;
-        $count_modify_in_database = 0;
-        $count_modify_in_sheet = 0;
-        $count_remove_from_both = 0;
-        $count_remove_from_database = 0;
-        $count_remove_from_sheet = 0;
-        foreach ($arrTableReport as $tableName => $action) {
-            if ($action == "add_to_database") {
-                $count_add_to_database++;
-            }
-            if ($action == "add_to_sheet") {
-                $count_add_to_sheet++;
-            }
-            if ($action == "modify_in_both") {
-                $count_modify_in_both++;
-            }
-            if ($action == "modify_in_database") {
-                $count_modify_in_database++;
-            }
-            if ($action == "modify_in_sheet") {
-                $count_modify_in_sheet++;
-            }
-            if ($action == "remove_from_both") {
-                $count_remove_from_both++;
-            }
-            if ($action == "remove_from_database") {
-                $count_remove_from_database++;
-            }
-            if ($action == "remove_from_sheet") {
-                $count_remove_from_sheet++;
-            }
-        }
-
         $count_total_action_report = $count_add_to_database + $count_modify_in_both + $count_add_to_sheet + $count_modify_in_database + $count_modify_in_sheet + $count_remove_from_both + $count_remove_from_database + $count_remove_from_sheet;
 
         $arrCount = [
@@ -1134,6 +1204,8 @@ class SiteController extends Controller {
         return $this->render('table-field-report', [
                     'dataProvider' => $dataProvider,
                     'arrCount' => $arrCount,
+                    'arrAllDatabaseName' => $arrAllDatabaseName,
+                    'database' => $arrDatabase,
         ]);
     }
 

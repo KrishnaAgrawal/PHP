@@ -297,4 +297,38 @@ class DbCompare {
         return $strFieldType;
     }
 
+    public function getDatabaseName(){
+        $db_type = '';
+        $dsn = '';
+        $db_type = Yii::$app->db->driverName;       // mysql/sqlite
+        $dsn = Yii::$app->db->dsn;                  // sqlite:C:\Users\shria\Desktop\saarthi1_retail_user.db || mysql:host=192.168.10.230;dbname=saathi_001_00002_dev
+        $dbName = '';
+        if (!empty($db_type) && $db_type == "mysql") {
+            $dbName = explode('dbname=', $dsn);
+            if (!empty($dbName[1])) {
+                $dbName = $dbName[1];
+            }
+        }
+
+        if (!empty($db_type) && $db_type == "sqlite") {
+            $dbName = '';
+            $dbName = substr(basename($dsn), 0, -3);
+        }
+        
+        return [
+            'dbName' => $dbName,
+            'dsn' => $dsn,
+            'db_type' => $db_type,
+        ];
+    }
+    
+    public function getAllDatabaseNameFromJson($arrTableReport){
+        
+    // making all databases array
+        foreach($arrTableReport as $key => $value){
+            $arrAllDatabaseName[$key] = $key;
+        }
+        array_unshift($arrAllDatabaseName, "All");
+        return $arrAllDatabaseName;
+    }
 }

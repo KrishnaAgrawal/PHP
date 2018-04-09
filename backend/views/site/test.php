@@ -4,6 +4,7 @@ use yii\bootstrap\Html;
 use yii\helpers\Html as Html2;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
+
 ?>
 
 <div class="col-md-3 m-0 p-0 left-block">
@@ -14,14 +15,17 @@ use yii\widgets\ActiveForm;
 
 
         <?php
-        
-        $form = ActiveForm::begin(['action' => Url::to(['compare-tables']), 'method' => 'get']);
+        //  'compare-tables'
+        $form = ActiveForm::begin(['action' => Url::to([$this->context->action->id]), 'method' => 'get']);
         ?>
         <!--Preference option-->
         <div class="col-md-12  card card-block mt-2 ml-2 p-1 pl-3">
             <h4> Comparison Type: </h4>
             <div>
                 <?php
+                    if(empty($preferenceOption)){
+                        $preferenceOption = "sheet_to_db";
+                    }
                 echo Html::radioList("preferenceOption", $preferenceOption, $arrpreferenceOption, ['class' => 'h-25', 'prompt' => 'Select-Sheet']) . "";
                 ?>
             </div>
@@ -76,7 +80,7 @@ use yii\widgets\ActiveForm;
         <!--Submit Button-->
         <div class="col-md-12 pull-right">
             <?php
-            echo "<br />" . Html2::submitButton('Submit', ['class' => 'btn btn-sm btn-primary']);
+            echo "<br />" . Html::submitButton('Submit', ['class' => 'btn btn-sm btn-primary']);
             ?>
         </div>
         <?php $form = ActiveForm::end(); ?>
