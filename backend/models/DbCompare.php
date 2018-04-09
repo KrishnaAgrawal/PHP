@@ -167,7 +167,7 @@ class DbCompare {
             $authUrl = $client->createAuthUrl();
             printf("Open the following link in your browser:\n%s\n", $authUrl);
             print 'Enter verification code: ';
-            $authCode = trim(fgets(STDIN));
+//            $authCode = trim(fgets(STDIN));
 
 // Exchange authorization code for an access token.
             $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
@@ -177,6 +177,7 @@ class DbCompare {
                 mkdir(dirname($credentialsPath), 0700, true);
             }
             file_put_contents($credentialsPath, json_encode($accessToken));
+            
             printf("Credentials saved to %s\n", $credentialsPath);
         }
         $client->setAccessToken($accessToken);

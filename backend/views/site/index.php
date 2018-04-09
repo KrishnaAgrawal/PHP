@@ -176,9 +176,13 @@ $this->title = 'Database/Sheet Comparison (Table Wise)';
                     <div class="pull-left">
                         
                         <?php 
-                        $filters = (!empty($arrpreferenceOption[$preferenceOption])? implode(", &nbsp;", array_values($sheet)):'');
+                        if (in_array("All", $sheet)) {
+                            $temp = "All";
+                            $sheet = array_diff($sheet, [$temp]);
+                        }
+                        $filters = (!empty($arrpreferenceOption[$preferenceOption])?'<div class="<!--chip--> p-2 text-bold">'. implode(", &nbsp;", array_values($sheet)).'</div>':'');
                         
-                        $arrGridView['panelBeforeTemplate'] = '<div class="pull-left">'.$filters.'</div>';?>
+                        $arrGridView['panelBeforeTemplate'] = '<div class="text-success text-bold">Filter on Sheet</div> <div class="pull-left">'.$filters.'</div>';?>
                         
                     </div>
                         <?= \backend\models\GridEasy::widget(['arrGrid' => $arrGridView]); ?>

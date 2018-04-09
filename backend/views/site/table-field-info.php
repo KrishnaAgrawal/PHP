@@ -204,7 +204,7 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
                                     $str .= '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="Column exists in both" data-original-title="" title="">' . \backend\models\DbCompare::LABEL_YES . '</span>';
                                 }
                             } else {
-                                $str .= '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="'.(empty($data['sheetField'])?"Column does not exists in sheet":empty($data['dbField'])?"Column does not exists in database":"").'" data-original-title="" title="">' . \backend\models\DbCompare::LABEL_NO . '</span>';
+                                $str .= '<span data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="'.(empty($data['sheetField'])?"Column does not exists in sheet":(empty($data['dbField'])?"Column does not exists in database":"")).'" data-original-title="" title="">' . \backend\models\DbCompare::LABEL_NO . '</span>';
                             }
 
                             return $str;
@@ -328,7 +328,7 @@ $this->title = 'Database/Sheet Comparison (Column Wise)';
                         <?php
                         $filters = (!empty($sheet) && $preferenceOption == "sheet_to_db" ? '<div class="<!--chip--> p-2 text-bold">' . implode(", &nbsp;", array_values($sheet)) . '</div>' : '');
 
-                        $arrGridView['panelBeforeTemplate'] = '<div class="pull-left">' . $filters . '</div>';
+                        $arrGridView['panelBeforeTemplate'] = '<div class="text-success text-bold">Filter on Sheet</div> <div class="pull-left">' . $filters . '</div>';
                         ?>
 
                     </div>

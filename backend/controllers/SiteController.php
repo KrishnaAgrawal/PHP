@@ -16,6 +16,9 @@ use yii\web\Controller;
  */
 class SiteController extends Controller {
 
+    const APPLICATION_NAME = 'test';
+        const CREDENTIALS_PATH = 'token.json';
+        const CLIENT_SECRET_PATH = 'client_secret.json';
     /**
      * @inheritdoc
      */
@@ -55,6 +58,63 @@ class SiteController extends Controller {
         ];
     }
 
+    /*
+     * 
+     */
+    
+        
+    public function actionGetClient(){
+        if(!empty($name)){
+            
+        }
+        $name = '';
+        $value = '';
+        $authUrl = '';
+        $client = new \Google_Client();
+        $client->setApplicationName(self::APPLICATION_NAME);
+        $client->setScopes(implode(' ', array(
+            \Google_Service_Sheets::SPREADSHEETS_READONLY)
+        ));
+        $client->setAuthConfig(self::CLIENT_SECRET_PATH);
+        $client->setAccessType('offline');
+        $objDbCompare = new DbCompare();
+        
+// Load previously authorized credentials from a file.
+        $credentialsPath = $objDbCompare->expandHomeDirectory(self::CREDENTIALS_PATH);
+        
+        
+        if (Yii::$app->request->post()) {
+            
+// Request authorization from the user.
+            $authUrl = $client->createAuthUrl();
+            
+            $arrParams = Yii::$app->request->post();
+            if(!empty($arrParams)){
+                echo "<pre>";print_r($arrParams);exit;
+            }
+
+// Exchange authorization code for an access token.
+            $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
+
+// Store the credentials to disk.
+            if (!file_exists(dirname($credentialsPath))) {
+                mkdir(dirname($credentialsPath), 0700, true);
+            }
+            file_put_contents($credentialsPath, json_encode($accessToken));
+            
+            printf("Credentials saved to %s\n", $credentialsPath);
+        }
+//        
+//        return $client;
+        $this->render('get-client', [
+            'name' => $name,
+            'value' => $value,
+            'authUrl' => $authUrl,
+        ]);
+    }
+    
+    
+    
     /**
      * Displays homepage.
      *
@@ -77,6 +137,7 @@ class SiteController extends Controller {
         $arrpreferenceOption = $objDbCompare->getComparisonType();
         $arrResult = $this->compareSheetDb();
         $arrAll = $arrResult['arrTablesFields'];
+//        echo '<pre>';print_r($arrAll);exit;
         $arrParams = Yii::$app->request->queryParams;
         if (!empty($arrParams["common_field"])) {
             $common_field = $arrParams["common_field"];
@@ -87,7 +148,10 @@ class SiteController extends Controller {
             $strJson = file_get_contents($filename);
             $arrTableAction = Json::decode($strJson, true);
             $arrDatabaseDetail = $objDbCompare->getDatabaseName();
-            $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['columns'];
+            if(!empty($arrTableAction[$arrDatabaseDetail['dbName']]['columns'])){
+                $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['columns'];
+            }
+            
         }
         else{
             $handle = fopen($filename, "w"); 
@@ -104,6 +168,7 @@ class SiteController extends Controller {
 
         // getting value by name for matching type
         if (!empty($arrParams["sheet_db"])) {
+//            echo "<pre>";print_r($arrParams["sheet_db"]);exit;
             $sheet_db = $arrParams["sheet_db"];
         }
 
@@ -131,7 +196,7 @@ class SiteController extends Controller {
         //  Matching 
         $totalColumnNonMatchCount = 0;
         if (!empty($arrParams['tables'])) {
-            if ($arrParams['tables'] == "Matching") {
+            if ($arrParams['tables'] == "Matching" && $sheet_db == 0) {
                 foreach ($arrAll as $key => $value) {
                     $flagFieldCompare = $value['sheetField'] != $value['dbField'];
                     $flagTypeCompare = $value['sheettypesize'] != $value['dbtypesize'];
@@ -149,7 +214,7 @@ class SiteController extends Controller {
 
         $totalColumnMatchCount = 0;
         if (!empty($arrParams['tables'])) {
-            if ($arrParams['tables'] == "Non-Matching") {
+            if ($arrParams['tables'] == "Non-Matching" && $sheet_db == 0) {
                 foreach ($arrAll as $key => $value) {
                     $flagFieldCompare = $value['sheetField'] == $value['dbField'];
                     $flagTypeCompare = $value['sheettypesize'] == $value['dbtypesize'];
@@ -221,7 +286,7 @@ class SiteController extends Controller {
             'pagination' => false,
         ]);
         $arrCommonOrNot = array_map(function($value) {
-            if ((!empty($value["dbField"]) && !empty($value["sheetField"])) && ($value["dbField"] == $value["sheetField"])) {
+            if ((!empty($value["dbField"]) && !empty($value["sheetField"])) && ($value["dbField"] == $value["sheetField"]) && ($value['sheettypesize'] == $value['dbtypesize'] && $value['sheetNull'] == $value['dbNull'] && $value['SheetPrimary'] == $value['DbPrimary']) && $value['SheetForeign'] == $value['DbForeign']) {
                 return 1;
             }
             return 0;
@@ -297,7 +362,9 @@ class SiteController extends Controller {
             $strJson = file_get_contents($filename);
             $arrTableAction = Json::decode($strJson, true);
             $arrDatabaseDetail = $objDbCompare->getDatabaseName();
-            $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['tables'];
+            if(!empty($arrDatabaseDetail['dbName']['tables'])){
+                $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['tables'];
+            }
         }
         
         if (!empty($arrResult['arrTables'])) {
@@ -401,7 +468,6 @@ class SiteController extends Controller {
                     'strTableToShow' => $strTableToShow,
                     'strTableSearched' => $strTableSearched,
                     'sheet_db' => $sheet_db,
-                    'sheet' => $sheet,
         ]);
     }
 
@@ -658,6 +724,7 @@ class SiteController extends Controller {
                 }
             }
         }
+        
 //  Column in database but not in sheets
         if (!empty($arrFieldNameFoundInDbNotInSheet)) {
             foreach ($arrFieldNameFoundInDbNotInSheet as $key => $value) {
@@ -733,6 +800,11 @@ class SiteController extends Controller {
                                 }
                             }
                         }
+                        $strFieldName = '';
+                        $strFieldType = '';
+                        $sheetNull = '';
+                        $strSheetPrimary = '';
+                        $strSheetForeign = '';
                     } else {
                         // Type Size
                         // 
@@ -808,6 +880,7 @@ class SiteController extends Controller {
                     }
 
 
+                    
                     $strResponse[$key][$subValue . "#Field"] = 'No/Not Exists in Sheet';
                     $strResponse[$key][$subValue . "#sheetField"] = $strFieldName;              #
                     $strResponse[$key][$subValue . "#dbField"] = $subValue;

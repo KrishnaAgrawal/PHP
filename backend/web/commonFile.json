@@ -2,12 +2,16 @@
     "saarthi1_retail_user": {
         "columns": {
             "tbl_account_group#txt_name": "remove_from_both",
-            "tbl_account_group#int_account_group_id": "modify_in_sheet"
+            "tbl_account_group#int_account_group_id": "modify_in_sheet",
+            "tbl_country#txt_tele_code": "modify_in_sheet"
         },
         "dbinfo": {
             "dbType": "sqlite",
             "dsn": "sqlite:C:\\Users\\shria\\Desktop\\saarthi1_retail_user.db",
             "name": "saarthi1_retail_user"
+        },
+        "tables": {
+            "tbl_account_group": "modify_in_database"
         }
     }
 }
