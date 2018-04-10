@@ -147,8 +147,8 @@ class SiteController extends Controller {
     public function actionIndex() {
 
         $arrCommonResponseColumnName = [];
+        $sheet = '';
         $strTableToShow = '';
-        $sheet_db = 0;
         $preferenceOption = '';
         $common_field = '';
         $filename = "commonFile.json";
@@ -163,6 +163,7 @@ class SiteController extends Controller {
     
         $arrResult = $this->compareSheetDb();
        
+        $sheet = $arrResult['sheet'];
         $arrAll = $arrResult['arrTablesFields'];
 //        echo '<pre>';print_r($arrAll);exit;
         $arrParams = Yii::$app->request->queryParams;
@@ -193,11 +194,6 @@ class SiteController extends Controller {
             $preferenceOption = $arrParams["preferenceOption"];
         }
 
-        // getting value by name for matching type
-        if (!empty($arrParams["sheet_db"])) {
-//            echo "<pre>";print_r($arrParams["sheet_db"]);exit;
-            $sheet_db = $arrParams["sheet_db"];
-        }
 
 
         //  Filter at Table Name
@@ -223,7 +219,7 @@ class SiteController extends Controller {
         //  Matching 
         $totalColumnNonMatchCount = 0;
         if (!empty($arrParams['tables'])) {
-            if ($arrParams['tables'] == "Matching" && $sheet_db == 0) {
+            if ($arrParams['tables'] == "Matching") {
                 foreach ($arrAll as $key => $value) {
                     $flagFieldCompare = $value['sheetField'] != $value['dbField'];
                     $flagTypeCompare = $value['sheettypesize'] != $value['dbtypesize'];
@@ -241,7 +237,7 @@ class SiteController extends Controller {
 
         $totalColumnMatchCount = 0;
         if (!empty($arrParams['tables'])) {
-            if ($arrParams['tables'] == "Non-Matching" && $sheet_db == 0) {
+            if ($arrParams['tables'] == "Non-Matching") {
                 foreach ($arrAll as $key => $value) {
                     $flagFieldCompare = $value['sheetField'] == $value['dbField'];
                     $flagTypeCompare = $value['sheettypesize'] == $value['dbtypesize'];
@@ -336,7 +332,6 @@ class SiteController extends Controller {
                     'arrTablesFields' => $arrResult['arrTablesFields'],
                     'strTableToShow' => $strTableToShow,
                     'arrMatchTypeToShow' => $arrMatchTypeToShow,
-                    'sheet_db' => $sheet_db,
                     'arrCount' => $arrCount,
                     'arrpreferenceOption' => $arrpreferenceOption,
                     'preferenceOption' => $preferenceOption,
@@ -344,7 +339,8 @@ class SiteController extends Controller {
                     'arrActionDbNoSheet' => $arrActionDbNoSheet,
                     'arrActionNoDbSheet' => $arrActionNoDbSheet,
                     'arrTableAction' => $arrTableAction,
-                    'common_field' => $common_field,
+                    'common_field' => $common_field, 
+                    'sheet' => $sheet,
         ]);
     }
 
@@ -359,6 +355,7 @@ class SiteController extends Controller {
         $arrParams = Yii::$app->request->queryParams;
         $filename = "commonFile.json";
         $arrTableAction = [];
+        $sheet = '';
         $sheet_db = 0;
         $strTableToShow = '';
         $preferenceOption = '';
@@ -495,13 +492,14 @@ class SiteController extends Controller {
                     'strTableToShow' => $strTableToShow,
                     'strTableSearched' => $strTableSearched,
                     'sheet_db' => $sheet_db,
+                    'sheet' => $sheet,
         ]);
     }
 
     private function compareSheetDb() {
         //  Used for having unlimited loading time.
         ini_set('max_execution_time', -1);
-
+        $sheet = '';
         $strResponse = [];
         $arrTable = [];
         $arrSheetTitle = [];
@@ -935,6 +933,7 @@ class SiteController extends Controller {
             'arrTablesFields' => $arrRes,
             'arrMatchTypeToShow' => $arrMatchTypeToShow,
             'arrCommonResponse' => $arrCommonResponse,
+            'sheet' => $sheet,
         ];
     }
 

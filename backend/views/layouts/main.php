@@ -38,6 +38,9 @@ AppAsset::register($this);
     $menuItems = [
         ['label' => 'Home', 'url' => ['/site/index']],
     ];
+    $menuItems = [
+        ['label' => 'Create Credentials', 'url' => ['/site/client-auth']],
+    ];
 
     $subMenuItems[] = ['label' => 'Compare Tables', 'url' => ['/site/compare-tables']];
     $subMenuItems[] = ['label' => 'Compare Columns', 'url' => ['/site/index']];

@@ -41,7 +41,7 @@ $this->title = 'Database/Sheet Comparison (Table Wise)';
     <div class="content">
         <div class="row">
             <!-- Left Section -->
-            <?php echo  $this->context->renderPartial('test',$_params_); ?>  
+            <?php echo  $this->context->renderPartial('left-compare-filter',$_params_); ?>  
             <?php
 //            Data Provider Code
             if (!empty($dataProvider)) {
@@ -180,9 +180,9 @@ $this->title = 'Database/Sheet Comparison (Table Wise)';
                             $temp = "All";
                             $sheet = array_diff($sheet, [$temp]);
                         }
-                        $filters = (!empty($arrpreferenceOption[$preferenceOption])?'<div class="<!--chip--> p-2 text-bold">'. implode(", &nbsp;", array_values($sheet)).'</div>':'');
+                        $filters = (!empty($arrpreferenceOption[$preferenceOption])?'<div class="<!--chip--> p-2 text-bold">'. implode(", &nbsp;", array_values($sheet)).'</div>':'(none)');
                         
-                        $arrGridView['panelBeforeTemplate'] = '<div class="text-success text-bold">Filter on Sheet</div> <div class="pull-left">'.$filters.'</div>';?>
+                        $arrGridView['panelBeforeTemplate'] = '<div class="text-success text-bold">Filtered on Sheet</div> <div class="pull-left">'.$filters.'</div>';?>
                         
                     </div>
                         <?= \backend\models\GridEasy::widget(['arrGrid' => $arrGridView]); ?>

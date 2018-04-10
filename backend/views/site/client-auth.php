@@ -46,7 +46,7 @@ if(!empty($msg)){
         <div class="col-md-2"></div>
         <div class="col-md-6">
             <?php
-                echo "<br />".Html::textInput("code", $value, ['id' => 'code', 'style' => 'width: 500px; height: 30px;', 'placeholder'=> "Enter the Code",])."&nbsp";
+                echo "<br />".Html::textInput("code", $value, ['required' => 'true', 'id' => 'code', 'style' => 'width: 500px; height: 30px;', 'placeholder'=> "Enter the Code",])."&nbsp";
                 $content = "<span class='text-danger' style='font-size: 1.4em; margin-left: -4%'>Enter the code copied which you have got from above link.</span>";
                 echo '<span class="glyphicon glyphicon-info-sign" style="font-size: 1em;" data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="' . $content . '" data-original-title="" title=""></span>';
 //                echo "<span class='text-danger' style='font-size: 0.8em; margin-left: 13%'>(enter the code copied which you have got from above link)</span>"
@@ -59,7 +59,7 @@ if(!empty($msg)){
         <div class="col-md-2"></div>
         <div class="col-md-6">
             <?php
-                echo "<br />".Html::textInput("sheetID", $value, ['id' => 'code', 'style' => 'width: 500px; height: 30px;', 'placeholder'=> "Enter the SpreedSheet ID",])."&nbsp";
+                echo "<br />".Html::textInput("sheetID", $value, ['required' => 'true', 'id' => 'code', 'style' => 'width: 500px; height: 30px;', 'placeholder'=> "Enter the SpreedSheet ID",])."&nbsp";
                 $content = "<span class='text-danger' style='font-size: 1.4em; margin-left: -4%'>Copy the blue text from the URL as: https://docs.google.com/spreadsheets/<br />d/<span class='text-info'>spreadsheetId</span>/edit#gid=sheetId.</span>";
                 echo '<span class="glyphicon glyphicon-info-sign" style="font-size: 1em;" data-trigger="hover" data-html="true" data-container="body" data-toggle="popover" data-placement="right" data-content="' . $content . '" data-original-title="" title=""></span>';
 //                echo "<span class='text-danger' style='font-size: 0.8em; margin-left: 13%'>(enter the code copied which you have got from above link)</span>"

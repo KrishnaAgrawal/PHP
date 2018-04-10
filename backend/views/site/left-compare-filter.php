@@ -1,7 +1,6 @@
 <?php
 
-use yii\bootstrap\Html;
-use yii\helpers\Html as Html2;
+use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
@@ -26,7 +25,7 @@ use yii\widgets\ActiveForm;
                     if(empty($preferenceOption)){
                         $preferenceOption = "sheet_to_db";
                     }
-                echo Html::radioList("preferenceOption", $preferenceOption, $arrpreferenceOption, ['class' => 'h-25', 'prompt' => 'Select-Sheet']) . "";
+                echo Html::radioList("preferenceOption", $preferenceOption, $arrpreferenceOption, ['class' => 'h-25', 'prompt' => 'Select-Sheet', 'itemOptions' => ['labelOptions'=>['class' => 'd-block']]]) . "";
                 ?>
             </div>
         </div>
@@ -67,16 +66,28 @@ use yii\widgets\ActiveForm;
             if (empty($strTableToShow)) {
                 $strTableToShow = "All";
             }
-            echo Html::radioList("tables", $strTableToShow, $arrMatchTypeToShow, ['class' => '', 'prompt' => 'Select-Sheet']) . "";
+            echo Html::radioList("tables", $strTableToShow, $arrMatchTypeToShow, ['class' => 'lineBreak', 'prompt' => 'Select-Sheet', 'itemOptions' => ['labelOptions'=>['class' => 'd-block']]]) . "";
             ?>
         </div>
 
         <!--checkbox for both table and sheet-->
+        <?php if(isset($sheet_db) && ($sheet_db == 0 || $sheet_db == 1)){ ?>
         <div class="col-md-12 pt-3">
             <?php
-            echo Html2::checkbox("sheet_db", $sheet_db, ['label' => "Show Missing Tables Also", 'labelOptions' => ['class' => 'd-block']]);
+            echo Html::checkbox("sheet_db", $sheet_db, ['label' => "Show Missing Tables Also", 'labelOptions' => ['class' => 'd-block']]);
             ?>
         </div>
+        <?php } ?>
+        
+        <!--checkbox for show common fields-->
+        <?php if(isset($common_field) && ($common_field == 0 || $common_field == 1)){ ?>
+        <div class="col-md-12 pt-3">
+            <?php
+                echo Html::checkbox("common_field", $common_field, ['label' => "Show Common Field"]);
+            ?>
+        </div>
+        <?php } ?>
+
         <!--Submit Button-->
         <div class="col-md-12 pull-right">
             <?php
@@ -86,3 +97,10 @@ use yii\widgets\ActiveForm;
         <?php $form = ActiveForm::end(); ?>
     </div>
 </div>
+
+<!--<style>
+    .lineBreak{
+        display: list-item;
+        color: green;
+    }
+</style>-->
