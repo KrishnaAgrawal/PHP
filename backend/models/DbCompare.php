@@ -217,7 +217,9 @@ class DbCompare {
         return $service;
     }
 
-    public function getSheetId($spreadsheetId = '1jlQZ-AzkN0-x-1O6w1PCYHY4duwFOj2cGqyO_wpPmWo') {
+    public function getSheetId($spreadsheetId = '') {
+        $filename = 'sheetId.txt';
+        $spreadsheetId = file_get_contents($filename);
         return $spreadsheetId;
     }
 

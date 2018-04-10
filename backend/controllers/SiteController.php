@@ -17,8 +17,8 @@ use yii\web\Controller;
 class SiteController extends Controller {
 
     const APPLICATION_NAME = 'test';
-        const CREDENTIALS_PATH = 'token.json';
-        const CLIENT_SECRET_PATH = 'client_secret.json';
+    const CREDENTIALS_PATH = 'token.json';
+    const CLIENT_SECRET_PATH = 'client_secret.json';
     /**
      * @inheritdoc
      */
@@ -58,18 +58,46 @@ class SiteController extends Controller {
         ];
     }
 
-    /*
-     * 
-     */
     
+    /*
+     * getting Spreedsheet ID
+     */
+//    public function actionSheetId(){
+//        $value = '';
+//        $sheetID = '';
+//        $filename = 'sheetID.json';
+//        $arrParams = Yii::$app->request->post();
+//        if(!empty($arrParams['sheetID'])){
+//            $shhetId = $arrParams['sheetID'];
+//        }
+//    // Creating json file for sheet id
+//        if (file_exists($filename)) {
+//            $strJson = file_get_contents($filename);
+//            $arrTableAction = Json::decode($strJson, true);
+//            
+//            if(!empty($arrTableAction[$arrDatabaseDetail['dbName']]['columns'])){
+//                $arrTableAction = $arrTableAction[$arrDatabaseDetail['dbName']]['columns'];
+//            }
+//        }
+//        else{
+//            $handle = fopen($filename, "w"); 
+//        }
+//        
+//        return $this->render('sheet-id',[
+//            'value' => $value,
+//        ]);
+//    }
+
+
+    /*
+     *  getting client Authorization and generating token.json
+     */
+    public function actionClientAuth(){
         
-    public function actionGetClient(){
-        if(!empty($name)){
-            
-        }
-        $name = '';
         $value = '';
         $authUrl = '';
+        $sheetID = '';
+        $filename = 'sheetID.txt';
         $client = new \Google_Client();
         $client->setApplicationName(self::APPLICATION_NAME);
         $client->setScopes(implode(' ', array(
@@ -81,33 +109,29 @@ class SiteController extends Controller {
         
 // Load previously authorized credentials from a file.
         $credentialsPath = $objDbCompare->expandHomeDirectory(self::CREDENTIALS_PATH);
-        
-        
-        if (Yii::$app->request->post()) {
+        $authUrl = $client->createAuthUrl();
+        $arrParams = Yii::$app->request->post();
+        if(!empty($arrParams['code']) && !empty($arrParams['sheetID'])){
+            $authCode = $arrParams['code']; 
             
-// Request authorization from the user.
-            $authUrl = $client->createAuthUrl();
-            
-            $arrParams = Yii::$app->request->post();
-            if(!empty($arrParams)){
-                echo "<pre>";print_r($arrParams);exit;
-            }
-
-// Exchange authorization code for an access token.
+    // Exchange authorization code for an access token.
             $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
-
-// Store the credentials to disk.
+    // Store the credentials to disk.
             if (!file_exists(dirname($credentialsPath))) {
                 mkdir(dirname($credentialsPath), 0700, true);
             }
             file_put_contents($credentialsPath, json_encode($accessToken));
+        //  
+            if (!file_exists(dirname($filename))) {
+                mkdir(dirname($filename), 0700, true);
+            }
+            file_put_contents($filename, $arrParams['sheetID']);
             
-            printf("Credentials saved to %s\n", $credentialsPath);
+            Yii::$app->session->setFlash('success',"Credentials saved to {$credentialsPath}") ;
         }
-//        
+
 //        return $client;
-        $this->render('get-client', [
-            'name' => $name,
+        return $this->render('client-auth',[
             'value' => $value,
             'authUrl' => $authUrl,
         ]);
@@ -134,8 +158,11 @@ class SiteController extends Controller {
         // getting matching type array 
         $arrMatchTypeToShow = $objDbCompare->getActionMatchTypeToShow();
         // getting preference option array
+        
         $arrpreferenceOption = $objDbCompare->getComparisonType();
+    
         $arrResult = $this->compareSheetDb();
+       
         $arrAll = $arrResult['arrTablesFields'];
 //        echo '<pre>';print_r($arrAll);exit;
         $arrParams = Yii::$app->request->queryParams;
